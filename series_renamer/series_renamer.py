@@ -6,6 +6,7 @@ import os
 import re
 import json
 import tvdb_api
+import colorama
 import shutil, errno
 from subprocess import call as call
 from sys import argv
@@ -23,6 +24,7 @@ if version_info < (3,0):
 else:
 	unicode = str
 
+colorama.init(autoreset=True)
 
 namingFormat = ''
 configs = ''
@@ -106,7 +108,7 @@ def run():
 		elif argv[1] == '-V' or argv[1] == '--version':
 			printexit(VERSION)
 		else:
-			print('Incorrect arguments\n')
+			print(colorama.Fore.RED + 'Incorrect arguments\n')
 			showHelp()
 	else:
 		main( os.getcwd() )
@@ -118,10 +120,10 @@ def main(path='.'):
 	"""
 
 	loadConfig()
-	print("What's the series name ? Write it as precise as possible.")
-	sname = input('> ')
+	print(colorama.Fore.MAGENTA + colorama.Style.BRIGHT + "What's the series name? Write it as precise as possible:")
+	sname = input(colorama.Fore.CYAN + colorama.Style.BRIGHT + '> ')
 	getNums(path)
-	print("Fetching Series data from TVDB")
+	print(colorama.Fore.MAGENTA + "Fetching Series data from TheTVDB.com")
 	seriesObj = getSeries(sname)
 	printShowInfo(seriesObj)
 
@@ -148,13 +150,19 @@ def main(path='.'):
 
 		while done == 0:
 			print()
-			print( trimUnicode(i[0]) )
-			print("Detected [Season " + str(mys) + ", Episode " + str(myep) + "]")
+			print(colorama.Fore.MAGENTA + "Local file name: " + colorama.Style.DIM + trimUnicode(i[0]) )
+			print(colorama.Fore.MAGENTA + "Detected order : " + colorama.Style.DIM + "[Season " + str(mys) + ", Episode " + str(myep) + "]")
 			done = 1
 			if allgo == 0:
-				print('Array', i[1])
-				print("Option : Yes (y) , No (n) , All (a) , Stop (s) , Season change (1) , Episode change (2)")
-				x = input('> ').lower()
+				print(colorama.Fore.MAGENTA  + 'Array          :', colorama.Fore.MAGENTA + colorama.Style.DIM + str(i[1]))
+				print(colorama.Fore.MAGENTA  + colorama.Style.BRIGHT + "Rename it? Choose one option: "
+				    + colorama.Fore.GREEN    + "Yes(y) "
+					+ colorama.Fore.RED      + "No(n) "
+					+ colorama.Fore.BLUE     + "All(a) "
+					+ colorama.Fore.YELLOW   + "Stop(s) "
+					+ colorama.Fore.CYAN     + "Season_change(1) "
+					+ colorama.Fore.WHITE    + "Episode_change(2) ")
+				x = input(colorama.Fore.CYAN + colorama.Style.BRIGHT + '> ').lower()
 				if x == 'y':
 					continue
 				elif x == 'n':
@@ -165,8 +173,8 @@ def main(path='.'):
 					dont = stop = 1
 					break
 				elif x == '1':
-					print('New season (-1, 0-{0}, #NUM) : '.format(len(i[1])-1), end='')
-					ps = input('>> ')
+					print(colorama.Fore.MAGENTA + 'New season (-1, 0-{0}, #NUM) : '.format(len(i[1])-1), end='')
+					ps = input(colorama.Fore.CYAN + colorama.Style.BRIGHT + '>> ')
 					if ps[0] == '#':
 						mys = int(ps[1:])
 					elif int(ps) < 0:
@@ -175,13 +183,13 @@ def main(path='.'):
 						mys = i[1][int(ps)]
 					done = 0
 				elif x == '2':
-					print('New episode (0-{0}) : '.format(len(i[1])-1), end='')
-					pep = int(input('>> '))
+					print(colorama.Fore.MAGENTA + 'New episode (0-{0}) : '.format(len(i[1])-1), end='')
+					pep = int(input(colorama.Fore.CYAN + colorama.Style.BRIGHT + '>> '))
 					if pep < len(i[1]) and pep >= 0:
 						myep = i[1][pep]
 					done = 0
 				else:
-					print('Invalid option. Try Again')
+					print(colorama.Fore.YELLOW + colorama.Style.BRIGHT + 'Invalid option. Try Again')
 					done = 0
 
 		if dont == 0: # if not not do it
@@ -194,7 +202,7 @@ def main(path='.'):
 						epd = epds
 						break
 				else:
-					warn('Episode not found via absolute_number, skipping')
+					warn(colorama.Fore.YELLOW + 'Episode not found via absolute_number, skipping')
 					continue
 
 				mys = str(epd['seasonnumber'])
@@ -204,16 +212,16 @@ def main(path='.'):
 					epd = seriesObj[ int(mys) ][r_myep]
 					epd['episodenumber'] = myep.replace(' ','')
 				except tvdb_seasonnotfound as e:
-					warn( 'Season not found : ' + '{}'.format(e.args[-1]) )
+					warn(colorama.Fore.YELLOW +  'Season not found : ' + '{}'.format(e.args[-1]) )
 					continue
 				except tvdb_api.tvdb_episodenotfound as e:
-					warn( 'Episode not found : ' + '{}'.format(e.args[-1]) )
+					warn(colorama.Fore.YELLOW +  'Episode not found : ' + '{}'.format(e.args[-1]) )
 					continue
 
 			# check namingformat agains all available attributes
 			tempmissing = isNameInvalid(epd)
 			if tempmissing:
-				warn('Naming Format ( ' + namingFormat + ' ) is invalid for tvdb data. Reason : missing ' + tempmissing)
+				warn(colorama.Fore.YELLOW + 'Naming Format ( ' + namingFormat + ' ) is invalid for tvdb data. Reason : missing ' + tempmissing)
 			else:
 				newname = makeName(sname, epd) + '.' + ext
 				renames[i[0]] = newname
@@ -237,18 +245,21 @@ def main(path='.'):
 	fpt.write(unicode(html))
 	fpt.close()
 
-	print("Log created at " + logfile)
-	print("Do you approve renaming ? (y/n)")
-	x = input('> ').lower()
+	print(colorama.Fore.MAGENTA + "Log created at: " + colorama.Style.DIM + logfile)
+	print(colorama.Fore.MAGENTA + colorama.Style.BRIGHT
+	    + "Do you approve renaming? "
+		+ colorama.Fore.GREEN    + "Yes(y) "
+		+ colorama.Fore.RED      + "No(n)")
+	x = input(colorama.Fore.CYAN + colorama.Style.BRIGHT + '> ').lower()
 
 	if x == 'y':
 		for i in renames.items():
 			if os.path.isfile(path + '/' + i[1]):
-				warn('File {0} exists, skipping'.format(i[1]))
+				warn(colorama.Fore.YELLOW + 'File {0} exists, skipping'.format(i[1]))
 			else:
 				os.rename(path + '/' + i[0], path + '/' + i[1])
 				subtitleRename(path + '/' + i[0], path + '/' + i[1])
-		print('Renaming Successful')
+		print(colorama.Fore.GREEN + colorama.Style.BRIGHT + 'Renaming Successful! Goodbye :)')
 
 	os.remove(logfile)
 	return 0
@@ -302,11 +313,11 @@ def getSeries(sname):
 		t = tvdb_api.Tvdb()
 		x = t[sname]
 	except tvdb_error:
-		throwError("There was an error connecting the TVDB API")
+		throwError(colorama.Fore.RED + colorama.Style.BRIGHT + "There was an error connecting the TVDB API")
 	except tvdb_shownotfound:
-		throwError("Show Not Found on TVDB")
+		throwError(colorama.Fore.RED + colorama.Style.BRIGHT + "Show Not Found on TVDB")
 	except Exception:
-		throwError("There was an error. Tvdb API")
+		throwError(colorama.Fore.RED + colorama.Style.BRIGHT + "There was an error. Tvdb API")
 	return x
 
 
@@ -363,14 +374,14 @@ def printShowInfo(obj):
 	Displays basic show info on the terminal
 	'''
 	drawline('-', '#'*80)
-	print('Series name       : ', obj['seriesname'])
-	print('Overview          : ', obj['overview'])
+	print(colorama.Fore.MAGENTA + 'Series name       : ', colorama.Fore.MAGENTA + colorama.Style.DIM + obj['seriesname'])
+	print(colorama.Fore.MAGENTA + 'Overview          : ', colorama.Fore.MAGENTA + colorama.Style.DIM + obj['overview'])
 	c = -1
 	try:
 		obj[0]
 	except tvdb_api.tvdb_seasonnotfound:
 		c = 0
-	print('Number of seasons : ', len(obj)+c)
+	print(colorama.Fore.MAGENTA + 'Number of seasons : ', colorama.Fore.MAGENTA + colorama.Style.DIM + str(len(obj)+c))
 	drawline('-', '#'*80)
 
 
@@ -392,7 +403,7 @@ def subtitleRename(old, new):
 	sub_formats = ['srt', 'sub', 'sbv', 'ttxt', 'usf', 'smi'] # https://en.wikipedia.org/wiki/Subtitle_(captioning)#Subtitle_formats
 	for ext in sub_formats:
 		if os.path.isfile(namebase + '.' + ext):
-			print('Subtitle found, renaming..')
+			print(colorama.Fore.MAGENTA + 'Subtitle found, renaming..')
 			os.rename(namebase + '.' + ext, newnamebase + '.' + ext)
 
 
@@ -430,24 +441,26 @@ def drawline(char, msg):
 	"""
 	Draws a line in the terminal
 	"""
-	print(char * (len(msg)+10))
+	print(colorama.Fore.MAGENTA + colorama.Style.DIM + char * (len(msg)+10))
 
 
 def warn(msg):
 	"""
 	Gives a warning
 	"""
-	drawline('>', msg)
-	print("WARNING :", msg)
-	drawline('>', msg)
+	drawline(colorama.Fore.YELLOW + '>', msg)
+	print(colorama.Fore.YELLOW + colorama.Style.BRIGHT + "WARNING :",
+	    colorama.Fore.YELLOW + msg)
+	drawline(colorama.Fore.YELLOW + '>', msg)
 
 
 def throwError(msg):
 	"""
 	Throws error and exists
 	"""
-	drawline('#', msg)
-	print("ERROR :", msg)
+	drawline(colorama.Fore.RED + '#', msg)
+	print(colorama.Fore.RED + colorama.Style.BRIGHT + "ERROR :",
+	    colorama.Fore.RED + msg)
 	sysexit()
 
 
@@ -455,7 +468,7 @@ def printexit(msg, code=0):
 	'''
 	Prints and exists
 	'''
-	print(msg)
+	print(colorama.Fore.MAGENTA + msg)
 	sysexit(code)
 
 
