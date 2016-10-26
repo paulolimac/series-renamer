@@ -6,7 +6,10 @@ def read(fname):
 	return open(os.path.join(os.path.dirname(__file__), fname)).read()
 
 setup(
-	install_requires = ['tvdb-api'],
+	install_requires = [
+            'tvdb-api',
+            'colorama',
+        ],
 
 	name = "series-renamer",
 	version = "1.1.2",
