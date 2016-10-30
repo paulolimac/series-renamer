@@ -6,6 +6,7 @@ import os
 import re
 import json
 import tvdb_api
+import textwrap
 import shutil, errno
 from subprocess import call as call
 from sys import argv
@@ -118,10 +119,12 @@ def main(path='.'):
 	"""
 
 	loadConfig()
-	print("What's the series name ? Write it as precise as possible.")
+	print(wrapmessage(
+		prefix_indentation = 'Question: ',
+		message = "What's the series name ? Write it as precise as possible."))
 	sname = input('> ')
 	getNums(path)
-	print("Fetching Series data from TVDB")
+	print("Status: fetching series data from TheTVDB.com.")
 	seriesObj = getSeries(sname)
 	printShowInfo(seriesObj)
 
@@ -147,13 +150,23 @@ def main(path='.'):
 			myep= i[1][0]
 
 		while done == 0:
-			print()
-			print( trimUnicode(i[0]) )
-			print("Detected [Season " + str(mys) + ", Episode " + str(myep) + "]")
+			print(wrapmessage(
+				prefix_indentation = 'Status: ',
+				message = 'Combining online and local datas.'))
+			print(wrapmessage(
+				prefix_indentation = 'Local filename : ',
+				message = trimUnicode(i[0])))
+			print(wrapmessage(
+				prefix_indentation = 'Detected       : ',
+				message = "[Season " + str(mys) + ", Episode " + str(myep) + "]"))
 			done = 1
 			if allgo == 0:
-				print('Array', i[1])
-				print("Option : Yes (y) , No (n) , All (a) , Stop (s) , Season change (1) , Episode change (2)")
+				print(wrapmessage(
+					prefix_indentation = 'Array          : ',
+					message = str(i[1])))
+				print(wrapmessage(
+					prefix_indentation = 'Question: ',
+					message = "Do you want to rename it? Please, choose one option: Yes (y) , No (n) , All (a) , Stop (s) , Season_change (1) , Episode_change (2)"))
 				x = input('> ').lower()
 				if x == 'y':
 					continue
@@ -181,7 +194,7 @@ def main(path='.'):
 						myep = i[1][pep]
 					done = 0
 				else:
-					print('Invalid option. Try Again')
+					warn('Invalid option! Try to choose a option again.')
 					done = 0
 
 		if dont == 0: # if not not do it
@@ -204,10 +217,10 @@ def main(path='.'):
 					epd = seriesObj[ int(mys) ][r_myep]
 					epd['episodenumber'] = myep.replace(' ','')
 				except tvdb_seasonnotfound as e:
-					warn( 'Season not found : ' + '{}'.format(e.args[-1]) )
+					warn('Season not found : ' + '{}'.format(e.args[-1]))
 					continue
 				except tvdb_api.tvdb_episodenotfound as e:
-					warn( 'Episode not found : ' + '{}'.format(e.args[-1]) )
+					warn('Episode not found : ' + '{}'.format(e.args[-1]))
 					continue
 
 			# check namingformat agains all available attributes
@@ -237,8 +250,12 @@ def main(path='.'):
 	fpt.write(unicode(html))
 	fpt.close()
 
-	print("Log created at " + logfile)
-	print("Do you approve renaming ? (y/n)")
+	print(wrapmessage(
+		prefix_indentation = 'Status: ',
+		message = 'Log created at file: ' + logfile))
+	print(wrapmessage(
+		prefix_indentation = 'Question: ',
+		message = "Do you approve renaming? Please, choose one option: Yes (y), No (n)"))
 	x = input('> ').lower()
 
 	if x == 'y':
@@ -248,7 +265,9 @@ def main(path='.'):
 			else:
 				os.rename(path + '/' + i[0], path + '/' + i[1])
 				subtitleRename(path + '/' + i[0], path + '/' + i[1])
-		print('Renaming Successful')
+		print(wrapmessage(
+			prefix_indentation = 'Status: ',
+			message = 'Renaming Successful! So, goodbye! :)'))
 
 	os.remove(logfile)
 	return 0
@@ -362,16 +381,22 @@ def printShowInfo(obj):
 	'''
 	Displays basic show info on the terminal
 	'''
-	drawline('-', '#'*80)
-	print('Series name       : ', obj['seriesname'])
-	print('Overview          : ', obj['overview'])
+	drawline('-', '#'*79)
+	print(wrapmessage(
+		prefix_indentation = 'Series name       : ',
+		message = obj['seriesname']))
+	print(wrapmessage(
+		prefix_indentation = 'Overview          : ',
+		message = obj['overview']))
 	c = -1
 	try:
 		obj[0]
 	except tvdb_api.tvdb_seasonnotfound:
 		c = 0
-	print('Number of seasons : ', len(obj)+c)
-	drawline('-', '#'*80)
+	print(wrapmessage(
+		prefix_indentation = 'Number of seasons : ',
+		message = str(len(obj)+c)))
+	drawline('-', '#'*79)
 
 
 def getExtension(fname):
@@ -392,7 +417,9 @@ def subtitleRename(old, new):
 	sub_formats = ['srt', 'sub', 'sbv', 'ttxt', 'usf', 'smi'] # https://en.wikipedia.org/wiki/Subtitle_(captioning)#Subtitle_formats
 	for ext in sub_formats:
 		if os.path.isfile(namebase + '.' + ext):
-			print('Subtitle found, renaming..')
+			print(wrapmessage(
+				prefix_indentation = 'Status : ',
+				message = 'Subtitle found, renaming...'))
 			os.rename(namebase + '.' + ext, newnamebase + '.' + ext)
 
 
@@ -425,12 +452,27 @@ def str2Int(num):
 	n = re.findall('[1-9]\d*', str(num))
 	return int(n[0])
 
+def wrapmessage(prefix_indentation, message):
+	"""
+	Wraps message with a prefix and PEP8 defined line width.
+	Following https://www.python.org/dev/peps/pep-0008/#maximum-line-length.
+	"""
+	wrapper = textwrap.TextWrapper(
+		initial_indent = prefix_indentation,
+		width = 79,
+		subsequent_indent = ' '*len(prefix_indentation))
+	return wrapper.fill(message)
 
 def drawline(char, msg):
 	"""
 	Draws a line in the terminal
+	Maximum line lengh is 79
+	Following https://www.python.org/dev/peps/pep-0008/#maximum-line-length.
 	"""
-	print(char * (len(msg)+10))
+	if len(msg)+10 > 79:
+		print(char * 79)
+	else:
+		print(char * (len(msg)+10))
 
 
 def warn(msg):
@@ -438,7 +480,9 @@ def warn(msg):
 	Gives a warning
 	"""
 	drawline('>', msg)
-	print("WARNING :", msg)
+	print(wrapmessage(
+		prefix_indentation = 'WARNING : ',
+		message = msg))
 	drawline('>', msg)
 
 
@@ -447,7 +491,9 @@ def throwError(msg):
 	Throws error and exists
 	"""
 	drawline('#', msg)
-	print("ERROR :", msg)
+	print(wrapmessage(
+		prefix_indentation = 'ERROR : ',
+		message = msg))
 	sysexit()
 
 
