@@ -12,6 +12,7 @@ from sys import argv
 from sys import exit as sysexit
 from sys import version_info
 from platform import system
+from pyfiglet import Figlet
 
 from tvdb_api import tvdb_error
 from tvdb_api import tvdb_shownotfound
@@ -118,6 +119,27 @@ def main(path='.'):
 	"""
 
 	loadConfig()
+	some_good_fonts = [
+		'slant',
+		#'big',
+		#'bulbhead',
+		#'doom',
+		#'larry3d',
+		#'ogre',
+		#'serifcap',
+		#'small',
+		#'smslant',
+		#'standard',
+	]
+	print(Figlet(font=some_good_fonts[0]).renderText('series\n_renamer.py'))
+	print('Software : ' + 'series_renamer.py')
+	print('Docs     : ' + 'https://github.com/aviaryan/series-renamer')
+	print('Version  : ' + VERSION)
+	print('Author   : ' + 'Aviaryan')
+	print('Website  : ' + 'http://aviaryan.in/')
+	print('Github   : ' + 'https://github.com/aviaryan')
+	print('Facebook : ' + 'foo')
+	print('Twitter  : ' + 'foo')
 	print("What's the series name ? Write it as precise as possible.")
 	sname = input('> ')
 	getNums(path)
